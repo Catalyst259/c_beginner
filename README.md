@@ -65,8 +65,10 @@ xcode-select --install
 
 ## 2. fork 并创建自己的实验仓库
 将一份提示词复制到大模型工具中，让它们引导你一步步操作
-如果是 Codex，Claude Code 等 Coding Agent，它们将会代替你完成这些操作，大大节省你配置环境的时间
+(如果是 Codex，Claude Code 等 Coding Agent，它们将会代替你完成这些操作，大大节省你配置环境的时间)
+
 提示词在本文档的底部，可以直接复制
+
 **注意，fork完成后一定要进入 Actions 并开启 Enable workflows，否则提交的时候判分脚本不会自动运行**
 
 ## 3. 完成一个 Lab
