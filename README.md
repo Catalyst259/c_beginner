@@ -1,418 +1,219 @@
-# C Beginner Labs：从第一行 C 代码到系统编程
+# Lab 7：社团活动日志归档器
 
-这是一套面向零基础学习者的项目式 C 语言实验。你不会只做彼此孤立的语法题，而是会在一个真实的 Git 仓库中阅读已有代码、补全固定接口、编译程序、根据测试反馈调试，并把自己的进度提交到 GitHub。
+> “Controlling complexity is the essence of computer programming.” — Brian Kernighan
 
-课程包含 Lab 0 和 8 个主 Lab。每个 Lab 都是一个可以独立运行的小项目，并提供：
+## 本 Lab 学什么
 
-- 中文任务说明与明确的待修改文件；
-- 使用 C17、GCC 和 Make 的统一构建方式；
-- `make grade` 本地反馈；
-- push 后自动运行的 GitHub Actions 检查；
-- 按 Task 拆分的反馈，不设置隐藏测试、截止日期或排名。
+前面的 Lab 已经练习过数组、指针、字符串、结构体、动态内存和递归。本 Lab 开始让数据离开程序内存，保存到文本文件中。你会使用 `FILE *`、`fopen`、`fread`、`fwrite`、`fgetc`、`fputc`、`ferror` 和 `fclose`，并学习文件操作每一步都可能失败。
 
-建议按 `lab0_student` 到 `lab8_student` 的顺序学习。每个 Lab 位于独立分支中，彼此不继承代码。
+五个 Task 从覆盖写入、追加和安全读取开始，再进行流式文本统计，最后把读取、字符串替换、容量计算和写入组合成一个跨文件操作。所有任务只处理文本文件，不涉及二进制记录、文件锁或并发访问。
 
-## 开始前先认识三个名字
+## 本 Lab 要修改的文件
 
-下面的操作会反复用到三个概念：
+- `src/lab07.c`
 
-| 名称 | 含义 | 用途 |
-| --- | --- | --- |
-| 课程源仓库 | `Catalyst259/c_beginner` | 发布课程和各 Lab starter |
-| `origin` | 你 Fork 后的个人仓库 | 保存并提交你自己的代码 |
-| `upstream` | 课程源仓库在本地的别名 | 获取课程后续更新 |
+`src/main.c` 已负责读取 Task、路径与文本并打印结果；`include/lab07.h` 给出了评分器会直接调用的固定接口。不要修改公开枚举、结构体、函数名称、参数或返回类型。
 
-最重要的原则是：**从课程仓库获取题目，把完成的代码 push 到自己的 `origin`。**
+## 输入/输出与函数契约
 
-本指南中的 `<你的 GitHub 用户名>` 是占位符。输入命令时要换成你自己的用户名，并且不要输入尖括号。
+程序第一行是 `1` 至 `5` 的 Task 编号，后续各行由 Task 决定。路径最长 255 个可打印 ASCII 字符且不能为空。程序不打印菜单或输入提示。
 
-## 1. 准备开发环境
+公开函数使用以下状态：
 
-推荐使用以下环境之一：
+- `FILE_STATUS_OK`：操作全部成功，包括最后的 `fclose`。
+- `FILE_STATUS_OPEN_ERROR`：文件无法打开。
+- `FILE_STATUS_READ_ERROR`：读取过程或关闭输入文件失败。
+- `FILE_STATUS_WRITE_ERROR`：写入过程或关闭输出文件失败。
+- `FILE_STATUS_TOO_LARGE`：文件内容或替换结果放不进固定容量。
 
-- Windows：VS Code + WSL 2 + Ubuntu；
-- macOS：Terminal，安装 Xcode Command Line Tools；
-- Linux：任意常见发行版。
+文本容量 `LAB07_TEXT_CAPACITY` 为 1024，结尾的 `\0` 也占一个字节，因此最多保存 1023 个文件字节。文件内容中的换行符也属于文件字节。
 
-需要的工具是 Git、GCC、Make、Python 3 和 Bash。在终端中检查：
+### Task 1：覆盖写入完整文本
 
-```bash
-git --version
-gcc --version
-make --version
-python3 --version
-bash --version
-```
-
-Ubuntu 或 WSL 中缺少工具时，可以安装：
-
-```bash
-sudo apt update
-sudo apt install build-essential git python3
-```
-
-macOS 中缺少编译工具时，可以运行：
-
-```bash
-xcode-select --install
-```
-
-本项目不绑定某个 IDE。即使使用 VS Code，也请在终端中完成本指南里的 Git、编译和测试命令。
-
-## 2. Fork 课程仓库
-
-Fork 会在你的 GitHub 账号下创建一份仓库副本。以后你的学习记录和代码都会 push 到这个副本，不会直接修改课程源仓库。
-
-1. 登录 GitHub，打开课程仓库：<https://github.com/Catalyst259/c_beginner>。
-2. 点击页面右上角的 **Fork**。
-3. `Owner` 选择你自己的 GitHub 账号。
-4. 仓库名建议保持为 `c_beginner`。
-5. **取消勾选 `Copy the main branch only`。** 本课程的每个 Lab 都在独立分支；如果只复制 `main`，你的 Fork 中将缺少 `lab0_student` 到 `lab8_student`。
-6. 点击 **Create fork**，等待创建完成。
-
-GitHub 页面文字发生变化时，可以对照 [GitHub 官方 Fork 指南](https://docs.github.com/en/pull-requests/how-tos/work-with-forks/fork-a-repo)。关键要求不变：不要只复制默认分支。
-
-创建后，浏览器地址应类似：
+输入 Task、文件路径，随后把剩余标准输入原样作为文件内容：
 
 ```text
-https://github.com/<你的 GitHub 用户名>/c_beginner
+1
+build/activity.txt
+meeting at 19:00
+room 204
 ```
 
-打开分支下拉框，确认能看到 `lab0_student`、`lab1_student` 等分支。公开仓库只发布带 `_student` 后缀的练习分支；课程答案保存在独立的私有仓库中，不会出现在这里。
-
-## 3. Clone 你自己的仓库
-
-先在终端进入你准备存放代码的目录，然后 clone **自己的 Fork**。HTTPS 方式适合第一次使用 Git 的同学：
-
-```bash
-git clone https://github.com/<你的 GitHub 用户名>/c_beginner.git
-cd c_beginner
-```
-
-如果你已经为 GitHub 配置过 SSH，也可以使用：
-
-```bash
-git clone git@github.com:<你的 GitHub 用户名>/c_beginner.git
-cd c_beginner
-```
-
-不要使用网页上的 **Download ZIP**：ZIP 文件没有分支和提交历史，也无法正常完成后续的 `git switch`、`git commit` 和 `git push`。
-
-clone 完成后检查远程仓库：
-
-```bash
-git remote -v
-```
-
-你应该看到 `origin` 的 fetch 和 push 地址都指向你自己的用户名，例如：
+成功输出写入的字节数：
 
 ```text
-origin  https://github.com/your-name/c_beginner.git (fetch)
-origin  https://github.com/your-name/c_beginner.git (push)
+Wrote bytes: 26
 ```
 
-如果这里显示的是 `Catalyst259/c_beginner`，说明你 clone 了课程源仓库。请先停下来，重新 clone 自己的 Fork，否则你没有权限把练习推送到 `origin`。
+实现 `write_text_file(path, text)`：
 
-### 添加 upstream
+- 用 `fopen(path, "w")` 创建文件；文件已存在时覆盖旧内容。
+- 写入 `text` 中 `\0` 之前的全部字节，不把 `\0` 写进文件。
+- 空字符串合法，会得到一个空文件。
+- `fwrite` 短写或 `fclose` 失败都返回 `FILE_STATUS_WRITE_ERROR`。
 
-把课程源仓库登记为 `upstream`，以后可以获取课程更新。这也是 [GitHub 官方文档推荐的 Fork 远程配置](https://docs.github.com/en/pull-requests/how-tos/work-with-forks/configuring-a-remote-repository-for-a-fork)：
+即使写入调用成功，缓冲数据仍可能在关闭文件时才真正交给系统，因此不能忽略 `fclose` 的返回值。
 
-```bash
-git remote add upstream https://github.com/Catalyst259/c_beginner.git
-git remote -v
-```
+### Task 2：追加一行日志
 
-此时应该同时看到：
-
-- `origin` → 你的个人仓库；
-- `upstream` → `Catalyst259/c_beginner`。
-
-这个操作只需执行一次。如果 Git 提示 `remote upstream already exists`，说明已经添加过，不需要重复执行。
-
-## 4. 获取并切换到第一个 Lab
-
-先获取远程分支列表：
-
-```bash
-git fetch --all --prune
-git branch --remotes
-```
-
-第一次进入 Lab 0 时，创建本地 `lab0_student` 分支，并让它跟踪你个人仓库中的同名分支：
-
-```bash
-git switch --create lab0_student --track origin/lab0_student
-```
-
-检查当前分支：
-
-```bash
-git status
-```
-
-输出第一行应包含：
+输入 Task、路径和一行文本：
 
 ```text
-On branch lab0_student
+2
+build/activity.txt
+bring extension cables
 ```
 
-如果本地分支已经创建过，就不需要再次使用 `--create`，直接运行：
+成功输出：
 
-```bash
-git switch lab0_student
+```text
+Appended line
 ```
 
-### 如果 origin 中没有 student 分支
+实现 `append_text_line(path, line)`。用追加模式 `"a"` 打开文件；文件不存在时创建，存在时保留全部原内容。先写入 `line`，再额外写入恰好一个 `\n`。空行合法，会追加一个换行符。
 
-这通常表示 Fork 时勾选了 `Copy the main branch only`。你仍然可以从课程源仓库创建本地练习分支：
+`line` 的前置条件保证其中没有换行。和 Task 1 一样，任何写入或关闭失败都必须返回写错误。
 
-```bash
-git fetch upstream
-git switch --create lab0_student --track upstream/lab0_student
-git push --set-upstream origin lab0_student
+### Task 3：安全读取完整文件
+
+输入 Task 和待读取路径：
+
+```text
+3
+build/activity.txt
 ```
 
-最后一条命令会把该分支发布到你的 Fork，并把本地分支的跟踪目标改为 `origin/lab0_student`。之后正常使用 `git push` 即可。
+输出包含文件字节数和原内容：
 
-## 5. 完成一个 Lab
+```text
+File content (49 bytes):
+meeting at 19:00
+room 204
+bring extension cables
+```
 
-切换到 Lab 分支后，先阅读该分支根目录下的 `README.md`。每个 Lab 的具体输入输出、函数契约、Task 分数和需要修改的文件，都以该 README 为准。
+实现 `read_text_file(path, buffer, capacity, length)`：
 
-通用工作流程是：
+- 最多读取 `capacity` 个字节，用是否读满判断文件能否连同 `\0` 放入缓冲区。
+- 成功时在内容后写入 `\0`，并把文件字节数保存到 `*length`。
+- 空文件成功，得到空字符串和长度 0。
+- 打开、读取、关闭或容量检查失败时，调用者原来的 `buffer` 和 `*length` 必须完全不变。
+
+要满足失败保持语义，先把数据读入临时数组；确认整个操作成功后，再一次提交到调用者的输出参数。
+
+### Task 4：流式统计日志
+
+输入 Task 和路径：
+
+```text
+4
+build/activity.txt
+```
+
+输出：
+
+```text
+Statistics: characters=49 lines=3 words=8 longest_line=22
+```
+
+实现 `analyze_text_file(path, stats)`，逐字符读取并统计：
+
+- `characters`：文件中的字节总数，包括空格、制表符与换行符。
+- `lines`：每个 `\n` 结束一行；非空文件末尾未带 `\n` 的剩余部分也算一行。
+- `words`：由 `isspace` 所识别空白分开的非空字符序列。
+- `longest_line`：最长一行的字节数，不包含结束它的 `\n`。
+
+空文件的四项均为 0。连续换行会形成长度为 0 的空行。调用 `isspace` 前先转换为 `unsigned char`。读取失败时不要修改调用者原来的 `*stats`。
+
+### Task 5：跨文件批量替换
+
+输入 Task、源路径、目标路径、非空目标串和替换串；替换串所在行可以为空：
+
+```text
+5
+build/activity.txt
+build/published.txt
+room
+venue
+```
+
+成功输出：
+
+```text
+Replacements: 1
+```
+
+实现 `replace_text_file(source, destination, target, replacement, count)`：
+
+- 读取整个源文件，从左到右替换所有互不重叠的 `target`。
+- 新插入的 `replacement` 不再参与匹配；例如把 `a` 换成 `aa` 只处理原文件中的 `a`。
+- 重叠候选取最靠左的匹配；`aaaa` 中把 `aa` 换成 `X` 得到 `XX`。
+- 替换串可以为空，表示删除；没有匹配也要成功写出源文件的完整副本并返回 0。
+- 源文件和最终结果都必须能连同 `\0` 放入 `LAB07_TEXT_CAPACITY`。
+- 必须先完成读取、替换和容量检查，再以 `"w"` 打开目标文件。这样读取失败或结果过大时不会破坏已有目标文件。
+- 只有目标文件成功写完并关闭后才更新 `*count`；任何失败都保持原值。
+
+本 Task 必须自己完成需要的文件操作，不能调用前面四个公开 Task 函数。这样每个 Task 才能由评分器独立检查。
+
+未知 Task、缺行、额外非空白内容、空路径、过长字段、空目标串或相同的源/目标路径统一输出：
+
+```text
+Error: invalid input
+```
+
+文件操作错误分别输出：
+
+```text
+Error: cannot open file
+Error: file read failed
+Error: file write failed
+Error: file too large
+```
+
+## Task 与反馈分
+
+| Task | 分数 |
+| --- | ---: |
+| 覆盖写入完整文本 | 15 |
+| 追加一行日志 | 15 |
+| 安全读取完整文件 | 20 |
+| 流式统计日志 | 20 |
+| 跨文件批量替换 | 30 |
+
+每项使用只调用该函数的独立 harness 和对应 CLI 用例检查。后一个 Task 失败不会抹掉前面已经获得的反馈分，前一个 Task 没完成也不会阻止后续正确实现单独得分。结果写入 `build/grade.json`。
+
+## 本地运行
 
 ```bash
 make
+./build/lab07
 make grade
 ```
 
-- `make` 使用严格的 C17 编译选项构建程序；编译器警告也会被视为错误。
-- `make grade` 运行全部本地检查，并在 `build/grade.json` 生成机器可读结果。
-- `make clean` 可以删除 `build/` 中的编译产物，再进行一次干净构建。
+文件样例可以放在 `build/` 中；`make clean` 会删除整个 `build/`。建议每完成一个 Task 就运行程序，再执行一次 `make grade`。
 
-修改过程中可以随时查看状态和差异：
+## 完成与 push 流程
 
-```bash
-git status
-git diff
-```
-
-建议采用“小步修改、小步验证”的节奏：完成一个 Task，就重新运行 `make grade`，先读失败摘要，再定位代码。不要为了让分数变绿而修改 `tests/grade.py`；测试是学习反馈，真正需要完成的是 Lab README 指定的源文件。
-
-## 6. 提交并推送到自己的仓库
-
-在 push 前，先确认当前分支、远程地址和测试结果：
+确认 `make grade` 显示 `总分：100/100` 后提交并推送：
 
 ```bash
 git status
-git remote get-url origin
-make grade
-```
-
-`origin` 必须指向你自己的 GitHub 仓库。确认无误后，以 Lab 0 为例：
-
-```bash
-git add src/main.c
-git diff --staged
-git commit -m "Complete lab0 budget calculator"
-git push --set-upstream origin lab0_student
-```
-
-`git diff --staged` 用来复查即将进入提交的内容。后续 Lab 请根据各自 README 中“本 Lab 要修改的文件”执行 `git add`，不要无检查地把临时文件或无关改动一起提交。
-
-`--set-upstream`（可简写为 `-u`）只需在该分支第一次 push 时使用。建立跟踪关系后，后续进度可以这样提交：
-
-```bash
-git add src/
-git diff --staged
-git commit -m "Describe the completed task"
+git add src/lab07.c
+git commit -m "Complete lab07 file tools"
 git push
 ```
 
-push 完成后：
+GitHub Actions 会再次运行同一个 `make grade`，上传 `build/grade.json`，并显示当前反馈分。
 
-1. 打开你自己的 GitHub 仓库；
-2. 切换到刚推送的 `lab0_student` 分支；
-3. 打开 **Actions** 或提交旁的状态图标；
-4. 查看各 Task 的反馈和总分。
+## 常见错误/调试提示
 
-GitHub Actions 会再次运行与本地相同的 `make grade`。检查失败并不会删掉代码：阅读反馈、继续修改、重新 commit 和 push 即可。
-
-### 推送时的身份验证
-
-GitHub 不接受账号密码作为 Git 的 HTTPS 密码。如果终端要求验证，请使用浏览器登录、Git Credential Manager、Personal Access Token，或提前配置 SSH key。不要把 token、密码或私钥写进代码、README、提交记录或聊天截图。
-
-## 7. 进入下一个 Lab
-
-各 Lab 是独立项目，不需要把上一分支 merge 到下一分支。切换前先保证当前修改已经提交；否则 Git 可能拒绝切换，或把未提交改动带到错误的 Lab。
-
-例如完成 Lab 0 后进入 Lab 1：
-
-```bash
-git status
-git fetch origin
-git switch --create lab1_student --track origin/lab1_student
-```
-
-如果该本地分支已经存在：
-
-```bash
-git switch lab1_student
-```
-
-之后重复“阅读 Lab README → 编码 → `make grade` → commit → push”的流程。第一次 push Lab 1 时运行：
-
-```bash
-git push --set-upstream origin lab1_student
-```
-
-每次切换后都建议执行 `git status`，不要只凭终端目录名判断当前分支。
-
-## Lab 路线图
-
-| 顺序 | 练习分支 | 项目 | 核心知识 |
-| ---: | --- | --- | --- |
-| 0 | `lab0_student` | 社团活动经费速算器 | `printf`、`scanf`、变量、表达式、分支与输入校验 |
-| 1 | `lab1_student` | 游戏背包整理器 | 循环、固定数组、查找、筛选、排序与穷举 |
-| 2 | `lab2_student` | 社团消息编辑器 | 指针遍历、字符串、原地修改与安全复制 |
-| 3 | `lab3_student` | 冒险者队伍管理器 | 指针、结构体、结构体数组查找与排序 |
-| 4 | `lab4_student` | 冒险队补给列表 | `malloc/free`、所有权、动态数组与扩容 |
-| 5 | `lab5_student` | 中缀表达式计算器 | 递归下降、优先级、结合性与安全整数运算 |
-| 6 | `lab6_student` | 链表任务队列管理器 | 单链表、插入、删除、反转与完整释放 |
-| 7 | `lab7_student` | 社团活动日志归档器 | 文本文件、流式处理与错误路径 |
-| 8 | `lab8_student` | 迷你命令执行器 | POSIX 进程、`fork/exec/wait`、重定向与管道 |
-
-Lab 0 同时负责验证环境。Lab 1–5 建立 C 编程和数据结构基础；Lab 6–8 将所有权、文件和进程等系统概念串成完整项目。Lab 4–8 的评分还会使用 AddressSanitizer 和 UndefinedBehaviorSanitizer 帮助发现越界、释放后使用、内存泄漏和未定义行为。
-
-## 常见 Git 问题
-
-### `fatal: not a git repository`
-
-你可能不在仓库目录中。先执行：
-
-```bash
-cd c_beginner
-git status
-```
-
-### `fatal: a branch named 'lab0_student' already exists`
-
-本地分支已经存在，直接切换：
-
-```bash
-git switch lab0_student
-```
-
-### `fatal: invalid reference: origin/lab0_student`
-
-先确认远程分支：
-
-```bash
-git fetch --all --prune
-git branch --remotes
-```
-
-如果只有 `origin/main`，参考上文“如果 origin 中没有 student 分支”，从 `upstream/lab0_student` 创建分支并推送到自己的 Fork。
-
-### Git 拒绝切换分支
-
-先运行 `git status`。如果有未提交修改，优先完成检查并提交；如果只是暂时不想提交，可以使用：
-
-```bash
-git stash push -m "unfinished work"
-git switch lab0_student
-```
-
-回到原分支后用 `git stash pop` 恢复。执行前要确认当前分支，避免把修改恢复到错误位置。
-
-### push 被拒绝，提示 `non-fast-forward`
-
-远程分支包含本地尚未获取的提交。不要使用 `git push --force`。先执行：
-
-```bash
-git pull --rebase origin lab0_student
-```
-
-这里以 `lab0_student` 为例；其他 Lab 要替换成当前分支名。如果出现冲突，阅读 Git 标出的冲突文件，解决后再继续 rebase 和 push。不确定时保留现场并向课程维护者求助，不要用强制推送覆盖远程进度。
-
-### 不小心在 `main` 写了代码
-
-如果还没有提交，先暂存修改，再基于正确的远程 starter 创建分支：
-
-```bash
-git stash push -m "move work from main"
-git fetch origin
-git switch --create lab0_student --track origin/lab0_student
-git stash pop
-```
-
-然后检查 `git status`，确认改动在新分支，再提交并 push 到 `origin/lab0_student`。如果本地同名分支已经存在，把第三条命令改为 `git switch lab0_student`。如果 `stash pop` 出现冲突，不要删除任何文件，先求助并说明 `git status` 与 `git branch --all` 的输出。
-
-## 完成本课程后的学习路径
-
-不要把“学完 C 语法”当作终点。本课程更希望你获得三种可迁移能力：把需求拆成函数、借助测试定位问题、理解程序如何管理内存和操作系统资源。完成 Lab 8 后，可以沿下面的路线继续。
-
-### 1. 巩固 C 与计算机基础
-
-- 回头重写 Lab 4、6、8 中最薄弱的一个项目，不看旧实现；
-- 学会使用调试器、sanitizer 和系统调用手册，理解编译、链接及进程地址空间；
-- 补充位运算、函数指针、模块化接口、静态库与基础数据结构；
-- 做一个 500–1000 行的小项目，例如文本索引器、简化 shell 或终端记账工具。
-
-这一阶段的目标不是记更多语法，而是能解释资源由谁创建、由谁释放、错误如何向上传递。
-
-### 2. 学习现代 C++
-
-具备 C 的数组、指针、结构体和动态内存基础后，再进入 C++ 会更容易理解它解决了什么问题。建议依次学习：
-
-1. 引用、函数重载、`const`、命名空间；
-2. 类、构造/析构、RAII 和对象生命周期；
-3. `std::string`、`std::vector`、迭代器与常用 STL 算法；
-4. 智能指针、移动语义、泛型和模板；
-5. 使用测试与构建系统组织一个多文件 C++ 项目。
-
-不要把 C 代码简单改成 `.cpp` 后继续手写所有内存管理；重点是理解 RAII、标准容器和算法如何让所有权更清晰。
-
-### 3. 用 OJ 训练数据结构与算法
-
-OJ 适合训练边界分析、复杂度和实现速度，但应与项目练习并行，而不是替代项目。推荐顺序：
-
-1. 输入输出、模拟、枚举、排序与二分；
-2. 前缀和、双指针、栈、队列、链表；
-3. 哈希、树、堆、并查集；
-4. DFS/BFS、最短路和基础动态规划；
-5. 根据目标再学习高级数据结构与算法。
-
-每道题通过后记录时间复杂度、空间复杂度、错误边界和另一种解法。初期追求稳定写对，而不是只追求题量或复制模板。
-
-### 4. 进入操作系统与系统编程
-
-Lab 7–8 是操作系统学习的入口，而不是完整的操作系统课程。继续学习前建议先补充计算机组成原理和数据结构，然后关注：
-
-- 程序、进程与线程，用户态与内核态；
-- 虚拟内存、页表、栈、堆与内存映射；
-- 文件描述符、文件系统、管道与设备；
-- 并发、锁、条件变量、死锁和调度；
-- 系统调用、异常、中断与基本网络 I/O。
-
-学习时应配合实验：阅读小型教学操作系统源码，修改一个系统调用或调度策略，并用测试验证，而不只是观看课程视频。
-
-### 5. 把几条路线汇合成项目
-
-一个稳妥的顺序是：
-
-```text
-C Labs → 数据结构基础 → C++ 与 OJ 并行 → 计算机组成 → 操作系统 → 网络与更完整的系统项目
-```
-
-你不需要等一门课“全部学完”才开始下一项。可以用 C/C++ 项目维持工程能力，用 OJ 维持算法训练，再通过操作系统实验理解底层机制。最终作品应同时具备清晰的 README、可复现构建、自动测试和有意义的 Git 提交历史。
-
-## 给学习者的最后建议
-
-- 先读任务契约和现有代码，再动手；
-- 一次只解决一个失败原因；
-- 编译器警告、测试失败和 sanitizer 报告都是线索；
-- 频繁 commit，把每次提交控制在一个清晰目标内；
-- 不要害怕查手册，但要能用自己的话解释最终代码；
-- 卡住时提供当前分支、运行命令、完整错误信息和已经尝试过的方法。
-
-从 `lab0_student` 开始：Fork、clone、switch、完成第一个 Task，然后把第一次可复现的进度 push 到你自己的仓库。
+- `fopen` 返回的是指针；使用前必须检查是否为 `NULL`。
+- 模式 `"w"` 会立即截断旧文件，`"a"` 才会保留旧内容并从末尾写入。
+- EOF 只表示没有更多字节；循环结束后要用 `ferror` 区分正常 EOF 和读取错误。
+- `fwrite` 的返回值是成功写入的元素数量，不是简单的真假值。
+- 每条成功打开文件的路径都必须恰好关闭一次，错误分支也不能漏掉。
+- 文件字节数不包含字符串的 `\0`，但内存缓冲区容量必须为它多留一个位置。
+- 需要满足失败后输出参数不变时，先在局部变量中构造完整结果，最后再赋值。
+- 统计单词时维护“当前是否位于单词中”的状态，只有从空白进入非空白时才增加计数。
+- Task 5 写目标文件前先完成全部可能的容量检查，否则结果过大时会留下被截断的目标文件。
+- 编译器警告在本项目中视为错误；先修复 GCC 输出的第一条诊断。
