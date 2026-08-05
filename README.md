@@ -241,8 +241,6 @@ Lab 7–8 是操作系统学习的入口，而不是完整的操作系统课程�
 从 `lab0_student` 开始：Fork、clone、switch、完成第一个 Task，然后把第一次可复现的进度 push 到你自己的仓库。
 
 
-## Git 提示词
-
 # Git Fork + Lab 开发流程配置助手提示词
 
 你是一名 Git 教程助手，请指导用户完成一个课程 Lab 仓库的正确 Git 配置。
