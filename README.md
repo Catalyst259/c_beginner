@@ -13,7 +13,7 @@
 建议按 `lab0_student` 到 `lab8_student` 的顺序学习。每个 Lab 位于独立分支中，彼此不继承代码。
 
 每个实验分支下均有 README.md 文档，强烈建议先完全读懂后再开始写代码
-鼓励使用大语言模型工具辅助学习，但不鼓励直接用大模型填充答案。
+鼓励使用大语言模型工具辅助学习，解决环境问题，但不鼓励直接用大模型填充答案。
 那么话不多说，让我们开始吧！
 
 ## 开始前先认识三个名字
@@ -63,120 +63,10 @@ xcode-select --install
 
 本项目不绑定某个 IDE。即使使用 VS Code，也请在终端中完成本指南里的 Git、编译和测试命令。
 
-## 2. Fork 课程仓库
-
-Fork 会在你的 GitHub 账号下创建一份仓库副本。以后你的学习记录和代码都会 push 到这个副本，不会直接修改课程源仓库。
-
-1. 登录 GitHub，打开课程仓库：<https://github.com/Catalyst259/c_beginner>。
-2. 点击页面右上角的 **Fork**。
-3. `Owner` 选择你自己的 GitHub 账号。
-4. 仓库名建议保持为 `c_beginner`。
-5. **取消勾选 `Copy the main branch only`。** 本课程的每个 Lab 都在独立分支；如果只复制 `main`，你的 Fork 中将缺少 `lab0_student` 到 `lab8_student`。
-6. 点击 **Create fork**，等待创建完成。
-
-GitHub 页面文字发生变化时，可以对照 [GitHub 官方 Fork 指南](https://docs.github.com/en/pull-requests/how-tos/work-with-forks/fork-a-repo)。关键要求不变：不要只复制默认分支。
-
-创建后，浏览器地址应类似：
-
-```text
-https://github.com/<你的 GitHub 用户名>/c_beginner
-```
-
-打开分支下拉框，确认能看到 `lab0_student`、`lab1_student` 等分支。公开仓库只发布带 `_student` 后缀的练习分支；课程答案保存在独立的私有仓库中，不会出现在这里。
-
-## 3. Clone 你自己的仓库
-
-先在终端进入你准备存放代码的目录，然后 clone **自己的 Fork**。HTTPS 方式适合第一次使用 Git 的同学：
-
-```bash
-git clone https://github.com/<你的 GitHub 用户名>/c_beginner.git
-cd c_beginner
-```
-
-如果你已经为 GitHub 配置过 SSH，也可以使用：
-
-```bash
-git clone git@github.com:<你的 GitHub 用户名>/c_beginner.git
-cd c_beginner
-```
-
-不要使用网页上的 **Download ZIP**：ZIP 文件没有分支和提交历史，也无法正常完成后续的 `git switch`、`git commit` 和 `git push`。
-
-clone 完成后检查远程仓库：
-
-```bash
-git remote -v
-```
-
-你应该看到 `origin` 的 fetch 和 push 地址都指向你自己的用户名，例如：
-
-```text
-origin  https://github.com/your-name/c_beginner.git (fetch)
-origin  https://github.com/your-name/c_beginner.git (push)
-```
-
-如果这里显示的是 `Catalyst259/c_beginner`，说明你 clone 了课程源仓库。请先停下来，重新 clone 自己的 Fork，否则你没有权限把练习推送到 `origin`。
-
-### 添加 upstream
-
-把课程源仓库登记为 `upstream`，以后可以获取课程更新。这也是 [GitHub 官方文档推荐的 Fork 远程配置](https://docs.github.com/en/pull-requests/how-tos/work-with-forks/configuring-a-remote-repository-for-a-fork)：
-
-```bash
-git remote add upstream https://github.com/Catalyst259/c_beginner.git
-git remote -v
-```
-
-此时应该同时看到：
-
-- `origin` → 你的个人仓库；
-- `upstream` → `Catalyst259/c_beginner`。
-
-这个操作只需执行一次。如果 Git 提示 `remote upstream already exists`，说明已经添加过，不需要重复执行。
-
-## 4. 获取并切换到第一个 Lab
-
-先获取远程分支列表：
-
-```bash
-git fetch --all --prune
-git branch --remotes
-```
-
-第一次进入 Lab 0 时，创建本地 `lab0_student` 分支，并让它跟踪你个人仓库中的同名分支：
-
-```bash
-git switch --create lab0_student --track origin/lab0_student
-```
-
-检查当前分支：
-
-```bash
-git status
-```
-
-输出第一行应包含：
-
-```text
-On branch lab0_student
-```
-
-如果本地分支已经创建过，就不需要再次使用 `--create`，直接运行：
-
-```bash
-git switch lab0_student
-```
-
-### 如果 origin 中没有 student 分支
-
-这通常表示 Fork 时勾选了 `Copy the main branch only`。你仍然可以从课程源仓库创建本地练习分支：
-
-```bash
-git fetch upstream
-git switch --create lab0_student --track upstream/lab0_student
-git push --set-upstream origin lab0_student
-```
-
-最后一条命令会把该分支发布到你的 Fork，并把本地分支的跟踪目标改为 `origin/lab0_student`。之后正常使用 `git push` 即可。
+## 2. fork 并创建自己的实验仓库
+将以下提示词复制到大模型工具中，让它们引导你一步步操作
+如果是 Codex，Claude Code 等 Coding Agent，它们将会代替你完成这些操作，大大节省你配置环境的时间
+提示词在本文档的底部，可以直接复制
 
 ## 5. 完成一个 Lab
 
@@ -287,69 +177,7 @@ git push --set-upstream origin lab1_student
 
 Lab 0 同时负责验证环境。Lab 1–5 建立 C 编程和数据结构基础；Lab 6–8 将所有权、文件和进程等系统概念串成完整项目。Lab 4–8 的评分还会使用 AddressSanitizer 和 UndefinedBehaviorSanitizer 帮助发现越界、释放后使用、内存泄漏和未定义行为。
 
-## 常见 Git 问题
 
-### `fatal: not a git repository`
-
-你可能不在仓库目录中。先执行：
-
-```bash
-cd c_beginner
-git status
-```
-
-### `fatal: a branch named 'lab0_student' already exists`
-
-本地分支已经存在，直接切换：
-
-```bash
-git switch lab0_student
-```
-
-### `fatal: invalid reference: origin/lab0_student`
-
-先确认远程分支：
-
-```bash
-git fetch --all --prune
-git branch --remotes
-```
-
-如果只有 `origin/main`，参考上文“如果 origin 中没有 student 分支”，从 `upstream/lab0_student` 创建分支并推送到自己的 Fork。
-
-### Git 拒绝切换分支
-
-先运行 `git status`。如果有未提交修改，优先完成检查并提交；如果只是暂时不想提交，可以使用：
-
-```bash
-git stash push -m "unfinished work"
-git switch lab0_student
-```
-
-回到原分支后用 `git stash pop` 恢复。执行前要确认当前分支，避免把修改恢复到错误位置。
-
-### push 被拒绝，提示 `non-fast-forward`
-
-远程分支包含本地尚未获取的提交。不要使用 `git push --force`。先执行：
-
-```bash
-git pull --rebase origin lab0_student
-```
-
-这里以 `lab0_student` 为例；其他 Lab 要替换成当前分支名。如果出现冲突，阅读 Git 标出的冲突文件，解决后再继续 rebase 和 push。不确定时保留现场并向课程维护者求助，不要用强制推送覆盖远程进度。
-
-### 不小心在 `main` 写了代码
-
-如果还没有提交，先暂存修改，再基于正确的远程 starter 创建分支：
-
-```bash
-git stash push -m "move work from main"
-git fetch origin
-git switch --create lab0_student --track origin/lab0_student
-git stash pop
-```
-
-然后检查 `git status`，确认改动在新分支，再提交并 push 到 `origin/lab0_student`。如果本地同名分支已经存在，把第三条命令改为 `git switch lab0_student`。如果 `stash pop` 出现冲突，不要删除任何文件，先求助并说明 `git status` 与 `git branch --all` 的输出。
 
 ## 完成本课程后的学习路径
 
@@ -400,15 +228,6 @@ Lab 7–8 是操作系统学习的入口，而不是完整的操作系统课程�
 
 学习时应配合实验：阅读小型教学操作系统源码，修改一个系统调用或调度策略，并用测试验证，而不只是观看课程视频。
 
-### 5. 把几条路线汇合成项目
-
-一个稳妥的顺序是：
-
-```text
-C Labs → 数据结构基础 → C++ 与 OJ 并行 → 计算机组成 → 操作系统 → 网络与更完整的系统项目
-```
-
-你不需要等一门课“全部学完”才开始下一项。可以用 C/C++ 项目维持工程能力，用 OJ 维持算法训练，再通过操作系统实验理解底层机制。最终作品应同时具备清晰的 README、可复现构建、自动测试和有意义的 Git 提交历史。
 
 ## 给学习者的最后建议
 
@@ -420,3 +239,460 @@ C Labs → 数据结构基础 → C++ 与 OJ 并行 → 计算机组成 → 操�
 - 卡住时提供当前分支、运行命令、完整错误信息和已经尝试过的方法。
 
 从 `lab0_student` 开始：Fork、clone、switch、完成第一个 Task，然后把第一次可复现的进度 push 到你自己的仓库。
+
+
+## Git 提示词
+```markdown
+# Git Fork + Lab 开发流程配置助手提示词
+
+你是一名 Git 教程助手，请指导用户完成一个课程 Lab 仓库的正确 Git 配置。
+
+背景：
+
+* 课程源仓库：
+
+```
+https://github.com/Catalyst259/c_beginner.git
+```
+
+* 学生需要 Fork 该仓库，并在自己的 GitHub 仓库中完成各个 Lab。
+* 每个 Lab 都位于独立分支，例如：
+
+```
+lab0_student
+lab1_student
+lab2_student
+...
+lab8_student
+```
+
+* 学生自己的 Fork 用于保存个人代码和提交。
+* 课程源仓库用于提供 starter code 和后续更新。
+
+请严格按照以下 Git 工作流指导用户。
+
+---
+
+## 核心原则
+
+必须保证：
+
+```
+upstream → 课程源仓库 Catalyst259/c_beginner
+origin   → 学生自己的 Fork
+```
+
+关系如下：
+
+```
+课程仓库
+Catalyst259/c_beginner
+        |
+        | fork
+        ↓
+学生仓库
+<username>/c_beginner
+
+本地仓库：
+
+origin    → <username>/c_beginner
+upstream  → Catalyst259/c_beginner
+```
+
+学生：
+
+* 从 upstream 获取课程更新；
+* 从 origin 获取和保存自己的 Lab 分支；
+* 所有代码提交 push 到 origin；
+* 不直接 push 到 upstream。
+
+---
+
+# 第一步：Fork 仓库
+
+指导用户：
+
+1. 打开：
+
+```
+https://github.com/Catalyst259/c_beginner
+```
+
+2. 点击右上角：
+
+```
+Fork
+```
+
+3. 创建 Fork 时：
+
+必须取消：
+
+```
+Copy the main branch only
+```
+
+原因：
+
+课程 Lab 不全部存在于 main，而是在独立分支：
+
+```
+lab0_student
+lab1_student
+...
+lab8_student
+```
+
+如果只复制 main，会导致 Fork 缺少 Lab 分支。
+
+Fork 完成后检查：
+
+打开自己的仓库：
+
+```
+https://github.com/<username>/c_beginner
+```
+
+确认分支列表包含：
+
+```
+lab0_student
+lab1_student
+...
+lab8_student
+```
+
+---
+
+# 第二步：Clone 自己的 Fork
+
+必须 clone 自己的仓库：
+
+正确：
+
+```bash
+git clone https://github.com/<username>/c_beginner.git
+cd c_beginner
+```
+
+错误：
+
+```bash
+git clone https://github.com/Catalyst259/c_beginner.git
+```
+
+因为课程仓库不是自己的 origin，无法正常 push。
+
+检查：
+
+```bash
+git remote -v
+```
+
+应该看到：
+
+```
+origin https://github.com/<username>/c_beginner.git
+```
+
+---
+
+# 第三步：配置 upstream
+
+添加课程源仓库：
+
+```bash
+git remote add upstream https://github.com/Catalyst259/c_beginner.git
+```
+
+检查：
+
+```bash
+git remote -v
+```
+
+最终应该类似：
+
+```
+origin
+https://github.com/<username>/c_beginner.git
+
+upstream
+https://github.com/Catalyst259/c_beginner.git
+```
+
+解释：
+
+* origin：
+
+  * 学生自己的仓库
+  * commit
+  * push
+
+* upstream：
+
+  * 课程官方仓库
+  * 获取更新
+
+---
+
+# 第四步：获取 Lab 分支
+
+同步远程分支：
+
+```bash
+git fetch --all --prune
+```
+
+查看：
+
+```bash
+git branch -r
+```
+
+应该看到：
+
+```
+origin/lab0_student
+origin/lab1_student
+...
+
+upstream/lab0_student
+upstream/lab1_student
+...
+```
+
+---
+
+# 第五步：创建本地 Lab 分支
+
+第一次进入 Lab：
+
+例如 Lab0：
+
+```bash
+git switch --create lab0_student --track origin/lab0_student
+```
+
+之后：
+
+```bash
+git switch lab0_student
+```
+
+检查：
+
+```bash
+git status
+```
+
+确保：
+
+```
+On branch lab0_student
+```
+
+---
+
+# 第六步：完成 Lab 后提交
+
+修改代码：
+
+测试：
+
+```bash
+make
+make grade
+```
+
+查看修改：
+
+```bash
+git status
+git diff
+```
+
+提交：
+
+```bash
+git add .
+git commit -m "Complete lab0"
+```
+
+推送：
+
+第一次：
+
+```bash
+git push --set-upstream origin lab0_student
+```
+
+之后：
+
+```bash
+git push
+```
+
+---
+
+# 第七步：进入新的 Lab
+
+不要 merge 上一个 Lab。
+
+每个 Lab 是独立 starter。
+
+例如：
+
+```bash
+git fetch origin
+git switch --create lab1_student --track origin/lab1_student
+```
+
+然后重复：
+
+```
+阅读 README
+↓
+修改代码
+↓
+make grade
+↓
+git add
+↓
+git commit
+↓
+git push
+```
+
+---
+
+# 如果 Fork 时错误选择了 main only
+
+如果 origin 没有 Lab 分支：
+
+执行：
+
+```bash
+git fetch upstream
+```
+
+从课程仓库创建：
+
+```bash
+git switch --create lab0_student --track upstream/lab0_student
+```
+
+推送到自己的 Fork：
+
+```bash
+git push --set-upstream origin lab0_student
+```
+
+之后正常：
+
+```bash
+git push
+```
+
+---
+
+# 常见错误处理
+
+## origin 指向错误
+
+检查：
+
+```bash
+git remote -v
+```
+
+如果：
+
+```
+origin https://github.com/Catalyst259/c_beginner.git
+```
+
+说明 clone 错仓库。
+
+修改：
+
+```bash
+git remote set-url origin https://github.com/<username>/c_beginner.git
+```
+
+---
+
+## upstream 已存在
+
+如果：
+
+```
+remote upstream already exists
+```
+
+无需重复添加。
+
+检查：
+
+```bash
+git remote -v
+```
+
+---
+
+## push 被拒绝
+
+不要：
+
+```bash
+git push --force
+```
+
+优先：
+
+```bash
+git pull --rebase origin <branch>
+git push
+```
+
+---
+
+# 最终检查标准
+
+完成后，本地必须满足：
+
+```bash
+git remote -v
+```
+
+输出：
+
+```
+origin
+https://github.com/<username>/c_beginner.git
+
+upstream
+https://github.com/Catalyst259/c_beginner.git
+```
+
+工作流：
+
+```
+upstream
+    |
+    | fetch
+    ↓
+本地分支
+    |
+    | commit
+    ↓
+origin
+    |
+    | push
+    ↓
+学生 GitHub 仓库
+```
+
+不要直接修改 upstream，不要直接 push 课程仓库。
+
+```
