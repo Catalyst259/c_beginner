@@ -1,418 +1,189 @@
-# C Beginner Labs：从第一行 C 代码到系统编程
+# Lab 5：中缀表达式计算器
 
-这是一套面向零基础学习者的项目式 C 语言实验。你不会只做彼此孤立的语法题，而是会在一个真实的 Git 仓库中阅读已有代码、补全固定接口、编译程序、根据测试反馈调试，并把自己的进度提交到 GitHub。
+> “To iterate is human, to recurse divine.” — L. Peter Deutsch
 
-课程包含 Lab 0 和 8 个主 Lab。每个 Lab 都是一个可以独立运行的小项目，并提供：
+## 本 Lab 学什么
 
-- 中文任务说明与明确的待修改文件；
-- 使用 C17、GCC 和 Make 的统一构建方式；
-- `make grade` 本地反馈；
-- push 后自动运行的 GitHub Actions 检查；
-- 按 Task 拆分的反馈，不设置隐藏测试、截止日期或排名。
+前四个 Lab 已经练习过循环、数组、指针、结构体和动态内存。本 Lab 是第一阶段的收官项目：你会把一串普通的数学表达式拆成层次清楚的语法，并用递归下降的方法计算结果。
 
-建议按 `lab0_student` 到 `lab8_student` 的顺序学习。每个 Lab 位于独立分支中，彼此不继承代码。
-
-## 开始前先认识三个名字
-
-下面的操作会反复用到三个概念：
-
-| 名称 | 含义 | 用途 |
-| --- | --- | --- |
-| 课程源仓库 | `Catalyst259/c_beginner` | 发布课程和各 Lab starter |
-| `origin` | 你 Fork 后的个人仓库 | 保存并提交你自己的代码 |
-| `upstream` | 课程源仓库在本地的别名 | 获取课程后续更新 |
-
-最重要的原则是：**从课程仓库获取题目，把完成的代码 push 到自己的 `origin`。**
-
-本指南中的 `<你的 GitHub 用户名>` 是占位符。输入命令时要换成你自己的用户名，并且不要输入尖括号。
-
-## 1. 准备开发环境
-
-推荐使用以下环境之一：
-
-- Windows：VS Code + WSL 2 + Ubuntu；
-- macOS：Terminal，安装 Xcode Command Line Tools；
-- Linux：任意常见发行版。
-
-需要的工具是 Git、GCC、Make、Python 3 和 Bash。在终端中检查：
-
-```bash
-git --version
-gcc --version
-make --version
-python3 --version
-bash --version
-```
-
-Ubuntu 或 WSL 中缺少工具时，可以安装：
-
-```bash
-sudo apt update
-sudo apt install build-essential git python3
-```
-
-macOS 中缺少编译工具时，可以运行：
-
-```bash
-xcode-select --install
-```
-
-本项目不绑定某个 IDE。即使使用 VS Code，也请在终端中完成本指南里的 Git、编译和测试命令。
-
-## 2. Fork 课程仓库
-
-Fork 会在你的 GitHub 账号下创建一份仓库副本。以后你的学习记录和代码都会 push 到这个副本，不会直接修改课程源仓库。
-
-1. 登录 GitHub，打开课程仓库：<https://github.com/Catalyst259/c_beginner>。
-2. 点击页面右上角的 **Fork**。
-3. `Owner` 选择你自己的 GitHub 账号。
-4. 仓库名建议保持为 `c_beginner`。
-5. **取消勾选 `Copy the main branch only`。** 本课程的每个 Lab 都在独立分支；如果只复制 `main`，你的 Fork 中将缺少 `lab0_student` 到 `lab8_student`。
-6. 点击 **Create fork**，等待创建完成。
-
-GitHub 页面文字发生变化时，可以对照 [GitHub 官方 Fork 指南](https://docs.github.com/en/pull-requests/how-tos/work-with-forks/fork-a-repo)。关键要求不变：不要只复制默认分支。
-
-创建后，浏览器地址应类似：
+最终的计算器支持多步整数运算、`+`、`-`、`*`、`/`、`^`、一元正负号以及任意嵌套的小括号。例如：
 
 ```text
-https://github.com/<你的 GitHub 用户名>/c_beginner
+2 + 3 * (4 - 1)^2
 ```
 
-打开分支下拉框，确认能看到 `lab0_student`、`lab1_student` 等分支。公开仓库只发布带 `_student` 后缀的练习分支；课程答案保存在独立的私有仓库中，不会出现在这里。
-
-## 3. Clone 你自己的仓库
-
-先在终端进入你准备存放代码的目录，然后 clone **自己的 Fork**。HTTPS 方式适合第一次使用 Git 的同学：
-
-```bash
-git clone https://github.com/<你的 GitHub 用户名>/c_beginner.git
-cd c_beginner
-```
-
-如果你已经为 GitHub 配置过 SSH，也可以使用：
-
-```bash
-git clone git@github.com:<你的 GitHub 用户名>/c_beginner.git
-cd c_beginner
-```
-
-不要使用网页上的 **Download ZIP**：ZIP 文件没有分支和提交历史，也无法正常完成后续的 `git switch`、`git commit` 和 `git push`。
-
-clone 完成后检查远程仓库：
-
-```bash
-git remote -v
-```
-
-你应该看到 `origin` 的 fetch 和 push 地址都指向你自己的用户名，例如：
+结果为：
 
 ```text
-origin  https://github.com/your-name/c_beginner.git (fetch)
-origin  https://github.com/your-name/c_beginner.git (push)
+Result: 29
 ```
 
-如果这里显示的是 `Catalyst259/c_beginner`，说明你 clone 了课程源仓库。请先停下来，重新 clone 自己的 Fork，否则你没有权限把练习推送到 `origin`。
+直接一次写完整个解析器很困难，因此五个 Task 按解析层逐步开放能力。starter 已提供游标状态、空白处理、顶层接口和安全整数运算；你只需要集中完成 `parse_number`、`parse_term`、`parse_expression`、`parse_power`、`parse_primary` 和 `parse_unary` 中标出的 TODO。
 
-### 添加 upstream
+## 本 Lab 要修改的文件
 
-把课程源仓库登记为 `upstream`，以后可以获取课程更新。这也是 [GitHub 官方文档推荐的 Fork 远程配置](https://docs.github.com/en/pull-requests/how-tos/work-with-forks/configuring-a-remote-repository-for-a-fork)：
+- `src/lab05.c`
 
-```bash
-git remote add upstream https://github.com/Catalyst259/c_beginner.git
-git remote -v
-```
+`src/main.c` 已负责读取输入和输出错误；`include/lab05.h` 给出了评分器会直接调用的固定接口。不要修改公开枚举、函数名称、参数或返回类型。
 
-此时应该同时看到：
+## 输入/输出与函数契约
 
-- `origin` → 你的个人仓库；
-- `upstream` → `Catalyst259/c_beginner`。
+程序从标准输入读取一个不超过 255 字节的表达式，不打印菜单或输入提示。运算符、数字和括号之间允许任意空白。
 
-这个操作只需执行一次。如果 Git 提示 `remote upstream already exists`，说明已经添加过，不需要重复执行。
-
-## 4. 获取并切换到第一个 Lab
-
-先获取远程分支列表：
-
-```bash
-git fetch --all --prune
-git branch --remotes
-```
-
-第一次进入 Lab 0 时，创建本地 `lab0_student` 分支，并让它跟踪你个人仓库中的同名分支：
-
-```bash
-git switch --create lab0_student --track origin/lab0_student
-```
-
-检查当前分支：
-
-```bash
-git status
-```
-
-输出第一行应包含：
+成功时输出：
 
 ```text
-On branch lab0_student
+Result: VALUE
 ```
 
-如果本地分支已经创建过，就不需要再次使用 `--create`，直接运行：
+计算使用 `long long`。除法向零截断，因此 `20 / 3` 的结果是 `6`。乘方符号为单个 `^`，它从右向左结合：
 
-```bash
-git switch lab0_student
+```text
+2^3^2 == 2^(3^2) == 512
 ```
 
-### 如果 origin 中没有 student 分支
+乘方优先于一元负号，因此：
 
-这通常表示 Fork 时勾选了 `Copy the main branch only`。你仍然可以从课程源仓库创建本地练习分支：
-
-```bash
-git fetch upstream
-git switch --create lab0_student --track upstream/lab0_student
-git push --set-upstream origin lab0_student
+```text
+-2^2   == -(2^2)  == -4
+(-2)^2 == 4
 ```
 
-最后一条命令会把该分支发布到你的 Fork，并把本地分支的跟踪目标改为 `origin/lab0_student`。之后正常使用 `git push` 即可。
+支持 `-2`、`2 * -3`、`-(1 + 2)` 和 `--2`。指数必须大于等于零；`0^0` 在本 Lab 中定义为 `1`。不支持小数、`**` 或省略乘号的 `2(3)`。
 
-## 5. 完成一个 Lab
+错误输出固定为：
 
-切换到 Lab 分支后，先阅读该分支根目录下的 `README.md`。每个 Lab 的具体输入输出、函数契约、Task 分数和需要修改的文件，都以该 README 为准。
+```text
+Error: invalid expression
+Error: division by zero
+Error: negative exponent
+Error: arithmetic overflow
+```
 
-通用工作流程是：
+实现 `evaluate_expression(expression, result)`：成功时返回 `CALCULATOR_OK` 并写入结果；失败时返回对应状态，且不能修改调用者原来的 `*result`。
+
+## 先读懂这份文法
+
+每一行负责一种优先级。越靠下，结合得越紧：
+
+```text
+expression = term { ("+" | "-") term }
+term       = unary { ("*" | "/") unary }
+unary      = ("+" | "-") unary | power
+power      = primary [ "^" unary ]
+primary    = number | "(" expression ")"
+number     = digit { digit }
+```
+
+`Parser.cursor` 永远指向“下一个还没有处理的字符”。每层函数只消费自己认识的部分，然后把游标留给调用者。例如解析 `2 + 3 * 4` 时：
+
+1. `parse_expression` 先让 `parse_term` 读出 `2`。
+2. 它看见 `+`，再让 `parse_term` 读取右侧。
+3. 第二次 `parse_term` 先读出 `3`，发现 `*` 后继续读出 `4`。
+4. `parse_term` 返回 `12`，最外层再得到 `2 + 12 == 14`。
+
+每次检查当前字符前先调用 `skip_whitespace`。一旦 `parser->status` 不再是 `CALCULATOR_OK`，立即停止当前层并把错误交回上层，不要继续移动游标。
+
+### Task 1：读取整数与移动游标
+
+先实现 `parse_number`。跳过开头空白，确认当前字符是数字，然后逐位完成：
+
+```text
+value = value * 10 + digit
+```
+
+每读一位都要移动 `cursor`。starter 已留下不会触发溢出的判断位置；没有数字时设置 `CALCULATOR_INVALID_EXPRESSION`，文字超过 `LLONG_MAX` 时设置 `CALCULATOR_OVERFLOW`。
+
+完成后，单个整数已经可以通过整个程序运行：
+
+```text
+42
+```
+
+```text
+Result: 42
+```
+
+### Task 2：四则多步运算
+
+实现 `parse_term` 和 `parse_expression` 中的循环。
+
+- `parse_term` 调用 `parse_unary` 取得左值，只循环处理 `*` 和 `/`。
+- `parse_expression` 调用 `parse_term` 取得左值，只循环处理 `+` 和 `-`。
+- 每次发现属于本层的运算符：保存运算符、移动游标、解析右值、调用相应的 `checked_*` 辅助函数，再把结果作为新的左值。
+- 看见不属于本层的字符时直接结束循环，不能把它当作错误；它可能属于外层，也可能由顶层统一发现。
+
+这种“先得到左值，再循环吸收同级运算符”的结构同时保证优先级和同级左结合。
+
+### Task 3：乘方与右结合
+
+实现 `parse_power`。先用 `parse_primary` 读取底数；如果后面没有 `^`，直接返回底数。
+
+发现 `^` 后，右侧必须调用 `parse_unary`，而不是用循环读取另一个 `primary`。这个递归调用会让 `2^3^2` 先计算右边的 `3^2`。实际乘方和溢出检查已由 `checked_power` 提供。
+
+### Task 4：括号与递归
+
+扩展 `parse_primary`：
+
+- 当前字符不是 `(` 时，仍交给 `parse_number`。
+- 当前字符是 `(` 时，先消费它，再递归调用最外层的 `parse_expression`。
+- 内部表达式结束后必须找到并消费配对的 `)`；缺失时报告非法表达式。
+
+因为括号内部重新进入完整的 `expression`，同一份代码自然支持任意嵌套，不需要分别处理一层、两层或三层括号。
+
+### Task 5：一元符号与完整表达式
+
+实现 `parse_unary`。没有看到 `+` 或 `-` 时交给 `parse_power`；看到符号时先消费，再递归调用 `parse_unary`。一元 `+` 原样返回，一元 `-` 使用 `checked_negate`。
+
+这里的调用顺序决定 `-2^2 == -4`，也允许 `2^-1` 被完整解析后返回 `CALCULATOR_NEGATIVE_EXPONENT`。完成后，用混合表达式检查所有解析层是否能协作：
+
+```text
+2 + 3 * (4 - 1)^2
+```
+
+## Task 与反馈分
+
+| Task | 分数 |
+| --- | ---: |
+| 读取整数与移动游标 | 15 |
+| 四则多步运算 | 25 |
+| 乘方与右结合 | 20 |
+| 括号与递归 | 20 |
+| 一元符号与完整表达式 | 20 |
+
+五项都通过同一个 `evaluate_expression` 接口验收，但评分器会分别运行各能力范围的函数测试和程序输入。每项独立记录反馈，不使用“前一项失败就不运行后一项”的门禁。结果写入 `build/grade.json`。
+
+## 本地运行
 
 ```bash
 make
+./build/lab05
 make grade
 ```
 
-- `make` 使用严格的 C17 编译选项构建程序；编译器警告也会被视为错误。
-- `make grade` 运行全部本地检查，并在 `build/grade.json` 生成机器可读结果。
-- `make clean` 可以删除 `build/` 中的编译产物，再进行一次干净构建。
+建议每完成一个 Task 就运行一次程序样例和 `make grade`。不要等全部函数写完后才第一次编译。
 
-修改过程中可以随时查看状态和差异：
+## 完成与 push 流程
 
-```bash
-git status
-git diff
-```
-
-建议采用“小步修改、小步验证”的节奏：完成一个 Task，就重新运行 `make grade`，先读失败摘要，再定位代码。不要为了让分数变绿而修改 `tests/grade.py`；测试是学习反馈，真正需要完成的是 Lab README 指定的源文件。
-
-## 6. 提交并推送到自己的仓库
-
-在 push 前，先确认当前分支、远程地址和测试结果：
+确认 `make grade` 显示 `总分：100/100` 后提交并推送：
 
 ```bash
 git status
-git remote get-url origin
-make grade
-```
-
-`origin` 必须指向你自己的 GitHub 仓库。确认无误后，以 Lab 0 为例：
-
-```bash
-git add src/main.c
-git diff --staged
-git commit -m "Complete lab0 budget calculator"
-git push --set-upstream origin lab0_student
-```
-
-`git diff --staged` 用来复查即将进入提交的内容。后续 Lab 请根据各自 README 中“本 Lab 要修改的文件”执行 `git add`，不要无检查地把临时文件或无关改动一起提交。
-
-`--set-upstream`（可简写为 `-u`）只需在该分支第一次 push 时使用。建立跟踪关系后，后续进度可以这样提交：
-
-```bash
-git add src/
-git diff --staged
-git commit -m "Describe the completed task"
+git add src/lab05.c
+git commit -m "Complete lab05 calculator"
 git push
 ```
 
-push 完成后：
+GitHub Actions 会再次运行同一个 `make grade`，上传 `build/grade.json`，并显示当前反馈分。
 
-1. 打开你自己的 GitHub 仓库；
-2. 切换到刚推送的 `lab0_student` 分支；
-3. 打开 **Actions** 或提交旁的状态图标；
-4. 查看各 Task 的反馈和总分。
+## 常见错误/调试提示
 
-GitHub Actions 会再次运行与本地相同的 `make grade`。检查失败并不会删掉代码：阅读反馈、继续修改、重新 commit 和 push 即可。
-
-### 推送时的身份验证
-
-GitHub 不接受账号密码作为 Git 的 HTTPS 密码。如果终端要求验证，请使用浏览器登录、Git Credential Manager、Personal Access Token，或提前配置 SSH key。不要把 token、密码或私钥写进代码、README、提交记录或聊天截图。
-
-## 7. 进入下一个 Lab
-
-各 Lab 是独立项目，不需要把上一分支 merge 到下一分支。切换前先保证当前修改已经提交；否则 Git 可能拒绝切换，或把未提交改动带到错误的 Lab。
-
-例如完成 Lab 0 后进入 Lab 1：
-
-```bash
-git status
-git fetch origin
-git switch --create lab1_student --track origin/lab1_student
-```
-
-如果该本地分支已经存在：
-
-```bash
-git switch lab1_student
-```
-
-之后重复“阅读 Lab README → 编码 → `make grade` → commit → push”的流程。第一次 push Lab 1 时运行：
-
-```bash
-git push --set-upstream origin lab1_student
-```
-
-每次切换后都建议执行 `git status`，不要只凭终端目录名判断当前分支。
-
-## Lab 路线图
-
-| 顺序 | 练习分支 | 项目 | 核心知识 |
-| ---: | --- | --- | --- |
-| 0 | `lab0_student` | 社团活动经费速算器 | `printf`、`scanf`、变量、表达式、分支与输入校验 |
-| 1 | `lab1_student` | 游戏背包整理器 | 循环、固定数组、查找、筛选、排序与穷举 |
-| 2 | `lab2_student` | 社团消息编辑器 | 指针遍历、字符串、原地修改与安全复制 |
-| 3 | `lab3_student` | 冒险者队伍管理器 | 指针、结构体、结构体数组查找与排序 |
-| 4 | `lab4_student` | 冒险队补给列表 | `malloc/free`、所有权、动态数组与扩容 |
-| 5 | `lab5_student` | 中缀表达式计算器 | 递归下降、优先级、结合性与安全整数运算 |
-| 6 | `lab6_student` | 链表任务队列管理器 | 单链表、插入、删除、反转与完整释放 |
-| 7 | `lab7_student` | 社团活动日志归档器 | 文本文件、流式处理与错误路径 |
-| 8 | `lab8_student` | 迷你命令执行器 | POSIX 进程、`fork/exec/wait`、重定向与管道 |
-
-Lab 0 同时负责验证环境。Lab 1–5 建立 C 编程和数据结构基础；Lab 6–8 将所有权、文件和进程等系统概念串成完整项目。Lab 4–8 的评分还会使用 AddressSanitizer 和 UndefinedBehaviorSanitizer 帮助发现越界、释放后使用、内存泄漏和未定义行为。
-
-## 常见 Git 问题
-
-### `fatal: not a git repository`
-
-你可能不在仓库目录中。先执行：
-
-```bash
-cd c_beginner
-git status
-```
-
-### `fatal: a branch named 'lab0_student' already exists`
-
-本地分支已经存在，直接切换：
-
-```bash
-git switch lab0_student
-```
-
-### `fatal: invalid reference: origin/lab0_student`
-
-先确认远程分支：
-
-```bash
-git fetch --all --prune
-git branch --remotes
-```
-
-如果只有 `origin/main`，参考上文“如果 origin 中没有 student 分支”，从 `upstream/lab0_student` 创建分支并推送到自己的 Fork。
-
-### Git 拒绝切换分支
-
-先运行 `git status`。如果有未提交修改，优先完成检查并提交；如果只是暂时不想提交，可以使用：
-
-```bash
-git stash push -m "unfinished work"
-git switch lab0_student
-```
-
-回到原分支后用 `git stash pop` 恢复。执行前要确认当前分支，避免把修改恢复到错误位置。
-
-### push 被拒绝，提示 `non-fast-forward`
-
-远程分支包含本地尚未获取的提交。不要使用 `git push --force`。先执行：
-
-```bash
-git pull --rebase origin lab0_student
-```
-
-这里以 `lab0_student` 为例；其他 Lab 要替换成当前分支名。如果出现冲突，阅读 Git 标出的冲突文件，解决后再继续 rebase 和 push。不确定时保留现场并向课程维护者求助，不要用强制推送覆盖远程进度。
-
-### 不小心在 `main` 写了代码
-
-如果还没有提交，先暂存修改，再基于正确的远程 starter 创建分支：
-
-```bash
-git stash push -m "move work from main"
-git fetch origin
-git switch --create lab0_student --track origin/lab0_student
-git stash pop
-```
-
-然后检查 `git status`，确认改动在新分支，再提交并 push 到 `origin/lab0_student`。如果本地同名分支已经存在，把第三条命令改为 `git switch lab0_student`。如果 `stash pop` 出现冲突，不要删除任何文件，先求助并说明 `git status` 与 `git branch --all` 的输出。
-
-## 完成本课程后的学习路径
-
-不要把“学完 C 语法”当作终点。本课程更希望你获得三种可迁移能力：把需求拆成函数、借助测试定位问题、理解程序如何管理内存和操作系统资源。完成 Lab 8 后，可以沿下面的路线继续。
-
-### 1. 巩固 C 与计算机基础
-
-- 回头重写 Lab 4、6、8 中最薄弱的一个项目，不看旧实现；
-- 学会使用调试器、sanitizer 和系统调用手册，理解编译、链接及进程地址空间；
-- 补充位运算、函数指针、模块化接口、静态库与基础数据结构；
-- 做一个 500–1000 行的小项目，例如文本索引器、简化 shell 或终端记账工具。
-
-这一阶段的目标不是记更多语法，而是能解释资源由谁创建、由谁释放、错误如何向上传递。
-
-### 2. 学习现代 C++
-
-具备 C 的数组、指针、结构体和动态内存基础后，再进入 C++ 会更容易理解它解决了什么问题。建议依次学习：
-
-1. 引用、函数重载、`const`、命名空间；
-2. 类、构造/析构、RAII 和对象生命周期；
-3. `std::string`、`std::vector`、迭代器与常用 STL 算法；
-4. 智能指针、移动语义、泛型和模板；
-5. 使用测试与构建系统组织一个多文件 C++ 项目。
-
-不要把 C 代码简单改成 `.cpp` 后继续手写所有内存管理；重点是理解 RAII、标准容器和算法如何让所有权更清晰。
-
-### 3. 用 OJ 训练数据结构与算法
-
-OJ 适合训练边界分析、复杂度和实现速度，但应与项目练习并行，而不是替代项目。推荐顺序：
-
-1. 输入输出、模拟、枚举、排序与二分；
-2. 前缀和、双指针、栈、队列、链表；
-3. 哈希、树、堆、并查集；
-4. DFS/BFS、最短路和基础动态规划；
-5. 根据目标再学习高级数据结构与算法。
-
-每道题通过后记录时间复杂度、空间复杂度、错误边界和另一种解法。初期追求稳定写对，而不是只追求题量或复制模板。
-
-### 4. 进入操作系统与系统编程
-
-Lab 7–8 是操作系统学习的入口，而不是完整的操作系统课程。继续学习前建议先补充计算机组成原理和数据结构，然后关注：
-
-- 程序、进程与线程，用户态与内核态；
-- 虚拟内存、页表、栈、堆与内存映射；
-- 文件描述符、文件系统、管道与设备；
-- 并发、锁、条件变量、死锁和调度；
-- 系统调用、异常、中断与基本网络 I/O。
-
-学习时应配合实验：阅读小型教学操作系统源码，修改一个系统调用或调度策略，并用测试验证，而不只是观看课程视频。
-
-### 5. 把几条路线汇合成项目
-
-一个稳妥的顺序是：
-
-```text
-C Labs → 数据结构基础 → C++ 与 OJ 并行 → 计算机组成 → 操作系统 → 网络与更完整的系统项目
-```
-
-你不需要等一门课“全部学完”才开始下一项。可以用 C/C++ 项目维持工程能力，用 OJ 维持算法训练，再通过操作系统实验理解底层机制。最终作品应同时具备清晰的 README、可复现构建、自动测试和有意义的 Git 提交历史。
-
-## 给学习者的最后建议
-
-- 先读任务契约和现有代码，再动手；
-- 一次只解决一个失败原因；
-- 编译器警告、测试失败和 sanitizer 报告都是线索；
-- 频繁 commit，把每次提交控制在一个清晰目标内；
-- 不要害怕查手册，但要能用自己的话解释最终代码；
-- 卡住时提供当前分支、运行命令、完整错误信息和已经尝试过的方法。
-
-从 `lab0_student` 开始：Fork、clone、switch、完成第一个 Task，然后把第一次可复现的进度 push 到你自己的仓库。
+- 不要在每一层都尝试识别所有运算符；一个函数只负责文法中属于自己的那一行。
+- 解析右操作数前一定先移动过运算符，否则递归会在同一字符上反复调用。
+- `parse_term` 和 `parse_expression` 使用循环是为了左结合；`parse_power` 使用递归是为了右结合。
+- 括号内部调用 `parse_expression`，不是只调用 `parse_number`，否则括号里不能出现多步运算。
+- 返回错误后不要覆盖 `parser->status`；starter 的 `fail` 会保留最先发现的错误。
+- 不要直接写 `left + right` 或 `base * base`；有符号整数溢出属于未定义行为，应调用已提供的 `checked_*` 函数。
+- 调用 `isdigit`、`isspace` 等 `ctype` 函数前必须先转换为 `unsigned char`，starter 已展示正确写法。
+- 如果结果正确但评分仍失败，检查是否还有未消费的字符、错误状态是否正确，以及失败时有没有改写 `*result`。
+- 编译器警告在本项目中视为错误；先修复 GCC 输出的第一条诊断。
