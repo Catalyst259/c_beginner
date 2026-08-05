@@ -1,0 +1,5 @@
+# Lab 4 build outputs
+/build/
+*.o
+*.out
+__pycache__/
