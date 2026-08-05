@@ -64,9 +64,10 @@ xcode-select --install
 本项目不绑定某个 IDE。即使使用 VS Code，也请在终端中完成本指南里的 Git、编译和测试命令。
 
 ## 2. fork 并创建自己的实验仓库
-将以下提示词复制到大模型工具中，让它们引导你一步步操作
+将一份提示词复制到大模型工具中，让它们引导你一步步操作
 如果是 Codex，Claude Code 等 Coding Agent，它们将会代替你完成这些操作，大大节省你配置环境的时间
 提示词在本文档的底部，可以直接复制
+**注意，fork完成后一定要进入 Actions 并开启 Enable workflows，否则提交的时候判分脚本不会自动运行**
 
 ## 3. 完成一个 Lab
 
@@ -306,7 +307,7 @@ upstream  → Catalyst259/c_beginner
 
 ---
 
-# 第一步：Fork 仓库
+## 第一步：Fork 仓库
 
 指导用户：
 
@@ -360,9 +361,11 @@ lab1_student
 lab8_student
 ```
 
+对于公开仓库的 Fork，GitHub 默认不运行 Fork 内的 workflow，必须由 Fork 所有者在其 Actions 页面手动启用，这一步不能漏
+
 ---
 
-# 第二步：Clone 自己的 Fork
+## 第二步：Clone 自己的 Fork
 
 必须 clone 自己的仓库：
 
@@ -395,7 +398,7 @@ origin https://github.com/<username>/c_beginner.git
 
 ---
 
-# 第三步：配置 upstream
+## 第三步：配置 upstream
 
 添加课程源仓库：
 
@@ -434,7 +437,7 @@ https://github.com/Catalyst259/c_beginner.git
 
 ---
 
-# 第四步：获取 Lab 分支
+## 第四步：获取 Lab 分支
 
 同步远程分支：
 
@@ -462,7 +465,7 @@ upstream/lab1_student
 
 ---
 
-# 第五步：创建本地 Lab 分支
+## 第五步：创建本地 Lab 分支
 
 第一次进入 Lab：
 
@@ -492,7 +495,7 @@ On branch lab0_student
 
 ---
 
-# 第六步：完成 Lab 后提交
+## 第六步：完成 Lab 后提交
 
 修改代码：
 
@@ -533,7 +536,7 @@ git push
 
 ---
 
-# 第七步：进入新的 Lab
+## 第七步：进入新的 Lab
 
 不要 merge 上一个 Lab。
 
@@ -564,7 +567,7 @@ git push
 
 ---
 
-# 如果 Fork 时错误选择了 main only
+## 如果 Fork 时错误选择了 main only
 
 如果 origin 没有 Lab 分支：
 
@@ -594,9 +597,9 @@ git push
 
 ---
 
-# 常见错误处理
+## 常见错误处理
 
-## origin 指向错误
+### origin 指向错误
 
 检查：
 
@@ -638,7 +641,7 @@ git remote -v
 
 ---
 
-## push 被拒绝
+### push 被拒绝
 
 不要：
 
@@ -655,7 +658,7 @@ git push
 
 ---
 
-# 最终检查标准
+## 最终检查标准
 
 完成后，本地必须满足：
 
