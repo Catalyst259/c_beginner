@@ -1,0 +1,57 @@
+name: Lab feedback
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  grade:
+    outputs:
+      total: ${{ steps.score.outputs.total }}
+      max_total: ${{ steps.score.outputs.max_total }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run grader
+        run: make grade
+        continue-on-error: true
+      - name: Publish task summary
+        if: always()
+        run: |
+          echo "## Lab 3 feedback" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f build/grade.json ]; then
+            python3 -c 'import json; r=json.load(open("build/grade.json")); print("| Task | Score |"); print("| --- | ---: |"); [print("| {} | {}/{} |".format(t["name"], t["score"], t["max_score"])) for t in r["tasks"]]; print("\\nTotal: {}/{}".format(r["total"], r["max_total"]))' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "评分器未生成 build/grade.json。" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload grade report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lab03-grade-report
+          path: build/grade.json
+          if-no-files-found: warn
+      - name: Read score
+        id: score
+        if: always()
+        run: |
+          if [ -f build/grade.json ]; then
+            python3 -c 'import json; r=json.load(open("build/grade.json")); print("total={}".format(r["total"])); print("max_total={}".format(r["max_total"]))' >> "$GITHUB_OUTPUT"
+          else
+            echo "total=unavailable" >> "$GITHUB_OUTPUT"
+            echo "max_total=100" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Require all tasks to pass
+        if: always()
+        run: |
+          test -f build/grade.json
+          python3 -c 'import json; raise SystemExit(0 if json.load(open("build/grade.json"))["total"] == 100 else 1)'
+  score:
+    name: "Lab 3 Score: ${{ needs.grade.outputs.total }}/${{ needs.grade.outputs.max_total }}"
+    needs: grade
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show score
+        run: |
+          echo "Lab 3 score: ${{ needs.grade.outputs.total }}/${{ needs.grade.outputs.max_total }}"
