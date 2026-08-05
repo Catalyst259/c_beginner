@@ -1,0 +1,15 @@
+name: Enable lab workflows
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  enabled:
+    name: GitHub Actions enabled
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show next step
+        run: echo "GitHub Actions is enabled. Push to a lab branch to run its grader."
